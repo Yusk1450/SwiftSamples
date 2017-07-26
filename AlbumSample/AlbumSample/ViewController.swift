@@ -38,16 +38,17 @@ class ViewController: UIViewController
 		PHPhotoLibrary.shared().performChanges({
 
 			let albumName = "TestAlbum"
-			
-			if (self.existsAlbum(name: albumName))
-			{
-				print("すでに存在しています")
-			}
-			else
-			{
-				PHCollectionListChangeRequest.creationRequestForCollectionList(withTitle: albumName)
-			}
-			
+
+			self.existsAlbum(name: albumName, completionHandler: { (exists) in
+				
+				if (exists)
+				{
+					print("すでに存在しています")
+					return
+				}
+				
+				PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: albumName)
+			})
 		}) { (isSuccess, error) in
 			if (isSuccess)
 			{
@@ -60,11 +61,11 @@ class ViewController: UIViewController
 		}
 	}
 	
-	func existsAlbum(name:String) -> Bool
+	func existsAlbum(name:String, completionHandler: @escaping (_ exists:Bool) -> Void)
 	{
-		var exists = false
-		
 		PHPhotoLibrary.shared().performChanges({
+			
+			var exists = false
 			
 			// アルバムリストを取得する
 			let list = PHAssetCollection.fetchAssetCollections(with: PHAssetCollectionType.album,
@@ -73,24 +74,18 @@ class ViewController: UIViewController
 			// アルバムを検索する
 			list.enumerateObjects({ (album, index, isStop) in
 				
-				print(album.localizedTitle)
-				
 				if (album.localizedTitle == name)
 				{
 					exists = true
-					
-					print("check")
 					
 					let stop:ObjCBool = false
 					isStop.initialize(to: stop)
 				}
 			})
 			
+			completionHandler(exists)
+			
 		}, completionHandler: nil)
-		
-		print("end")
-		
-		return exists
 	}
 	
 	override func didReceiveMemoryWarning()
